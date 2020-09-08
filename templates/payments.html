@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flask Backend</title>
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='css/bootstrap.min.css')}}"
+    />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand font-weight-bold" href="{{url_for('webhooks')}}">Payments</a>
+        <a class="ml-auto nav-link text-white" href="{{url_for('imported_data')}}">Order Payments</a>
+      </div>
+    </nav>
+    <div class="container mt-3 pt-3">
+    <table class="table">
+        <thead>
+          <tr class="bg-info text-white">
+            <th scope="col">Invoice ID</th>
+            <th scope="col">Email</th>
+            <th scope="col">Phone</th>
+            <th scope="col">Currency</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Fee</th>
+            <th scope="col">Tax</th>
+            <th scope="col">Status</th>
+            <th scope="col">Created_at</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for p in payments %}
+                <tr>
+                    <td scope="row">{{ p.invoice_id}}</td>
+                    <td scope="row">{{ p.email}}</td>
+                    <td scope="row">{{ p.phone}}</td>
+                    <td scope="row">{{ p.currency}}</td>
+                    <td scope="row">{{ p.amount}}</td>
+                    <td scope="row">{{ p.fee}}</td>
+                    <td scope="row">{{ p.tax}}</td>
+                    <td scope="row">{{ p.status}}</td>
+                    <td scope="row">{{ p.created_at}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    <script src="{{url_for('static', filename='js/jquery.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+  </body>
+</html>
