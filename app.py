@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import pprint, json, datetime
 import pandas as pd
 from config import DevelopmentConfig
+from datetime import timezone 
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
@@ -43,9 +44,11 @@ class OrderPayments(db.Model):
 class Orders(db.Model):
     order_id = db.Column(db.String, primary_key=True)
     payment_status = db.Column(db.String)
+    payment_type = db.Column(db.String)
     amount_paid = db.Column(db.String)
     total_amount = db.Column(db.String)
     razorpay_payment_id = db.Column(db.String)
+    razorpay_order_id = db.Column(db.String)
     updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now())
 
 
@@ -65,12 +68,15 @@ def webhooks():
                     payment_db.payment_status = "Paid"
                     payment_db.payment_date = data["created_at"]
                     order = Orders.query.filter_by(order_id=payment_db.invoice_number).first()
-                    if order != None:
+                    if order != None and order.payment_status != "Paid":
                         order.payment_status = "Paid"
-                        order.amount_paid = main_obj["amount"]
-                        order.razorpay_payment_id = main_obj["invoice_id"]
-                        order.updated_at = datetime.datetime.now()
-                    db.session.commit()
+                        order.payment_type = "Online on Delivery"
+                        order.amount_paid = (main_obj["amount"]/100)
+                        order.razorpay_payment_id = main_obj["id"]
+                        order.razorpay_order_id = main_obj["order_id"]
+
+                        order.updated_at = datetime.datetime.utcnow()
+                        db.session.commit()
             payment = Payments(
                 invoice_id = main_obj["invoice_id"],
                 email = main_obj["email"],
@@ -110,7 +116,6 @@ def upload_csv():
     json_str = excel_data_df.to_json(orient='records')
     data = json.loads(json_str)
     for p in data:
-        print(p)
         new_payment = OrderPayments(
             invoice_number=p["Invoice Number"],
             customer_name=p["Customer Name"],
@@ -128,3 +133,6 @@ def upload_csv():
         db.session.add(new_payment)
         db.session.commit()
     return redirect(url_for("imported_data"))
+
+if __name__ == "__main__":
+    app.run(DEBUG=True)
