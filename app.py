@@ -44,6 +44,7 @@ class Orders(db.Model):
     order_id = db.Column(db.String, primary_key=True)
     payment_status = db.Column(db.String)
     amount_paid = db.Column(db.String)
+    total_amount = db.Column(db.String)
     razorpay_payment_id = db.Column(db.String)
     updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now())
 
@@ -92,6 +93,12 @@ def webhooks():
 def imported_data():
         order_payments = OrderPayments.query.all()
         return render_template("order_payments.html", payments = order_payments)
+
+@app.route("/orders")
+def orders_from_db():
+        orders = Orders.query.all()
+        return render_template("orders.html", orders = orders)
+
 
 
 @app.route("/upload_csv", methods=["GET", "POST"])

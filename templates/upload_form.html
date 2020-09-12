@@ -1,15 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Flask Backend</title>
-    <link
-      rel="stylesheet"
-      href="{{url_for('static', filename='css/bootstrap.min.css')}}"
-    />
-  </head>
-  <body>
+{% extends "layout.html" %}
+{% block content %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
         <a class="navbar-brand font-weight-bold" href="{{url_for('upload_csv')}}">Import Data</a>
@@ -27,7 +17,4 @@
             <input class="btn mt-3 btn-info" type="submit" value="IMPORT DATA">
         </form>
       </div>
-    <script src="{{url_for('static', filename='js/jquery.min.js')}}"></script>
-    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
-  </body>
-</html>
+{%endblock%}

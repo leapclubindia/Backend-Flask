@@ -1,15 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Learn Flask</title>
-    <link
-      rel="stylesheet"
-      href="{{url_for('static', filename='css/bootstrap.min.css')}}"
-    />
-  </head>
-  <body>
+{% extends "layout.html" %}
+{% block content %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <a class="navbar-brand font-weight-bold" href="{{url_for('imported_data')}}">Order Payments</a>
         <div class="ml-auto row">
@@ -59,7 +49,4 @@
         </tbody>
       </table>
       </div>
-    <script src="{{url_for('static', filename='js/jquery.min.js')}}"></script>
-    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
-  </body>
-</html>
+{% endblock %}

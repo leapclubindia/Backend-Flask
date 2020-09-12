@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+    <a class="navbar-brand font-weight-bold" href="{{url_for('webhooks')}}">Orders</a>
+    <div class="ml-auto row">
+        <a class="nav-link text-white" href="{{url_for('imported_data')}}">Order Payments</a>
+    </div>
+    </div>
+</nav>
+<div class="container mt-3 pt-3">
+    <table class="table">
+        <thead>
+            <tr class="bg-info text-white">
+            <th scope="col">Order ID</th>
+            <th scope="col">Payment Status</th>
+            <th scope="col">Total Amount</th>
+            <th scope="col">Amount Paid</th>
+            <th scope="col">Razorpay Payment ID</th>
+            <th scope="col">Updated AT</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for o in orders %}
+                <tr>
+                    <td scope="row">{{ o.order_id}}</td>
+                    <td scope="row">{{ o.payment_status}}</td>
+                    <td scope="row">{{ o.total_amount}}</td>
+                    <td scope="row">{{ o.amount_paid}}</td>
+                    <td scope="row">{{ o.razorpay_payment_id}}</td>
+                    <td scope="row">{{ o.updated_at}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
