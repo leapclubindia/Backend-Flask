@@ -13,7 +13,10 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
         <a class="navbar-brand font-weight-bold" href="{{url_for('webhooks')}}">Payments</a>
-        <a class="ml-auto nav-link text-white" href="{{url_for('imported_data')}}">Order Payments</a>
+        <div class="ml-auto row">
+          <a class="nav-link text-white" href="{{url_for('upload_csv')}}">Import Data</a>
+          <a class="nav-link text-white" href="{{url_for('imported_data')}}">Order Payments</a>
+      </div>
       </div>
     </nav>
     <div class="container mt-3 pt-3">

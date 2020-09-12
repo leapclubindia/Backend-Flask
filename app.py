@@ -1,14 +1,13 @@
-from flask import Flask, render_template, request, url_for
+from flask import Flask, render_template, request, url_for, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
-import pprint, json
+import pprint, json, datetime
 import pandas as pd
+from config import DevelopmentConfig
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
-app.config["SECRET_KEY"] = "DontTellAnyone"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config.from_object(DevelopmentConfig)
 
 # payments table schem
 class Payments(db.Model):
@@ -23,7 +22,7 @@ class Payments(db.Model):
     status = db.Column(db.String)
     tax = db.Column(db.Integer)
 
-# orders table schema
+# orderpayment table schema
 class OrderPayments(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     invoice_number= db.Column(db.Integer)
@@ -41,6 +40,14 @@ class OrderPayments(db.Model):
     payment_status= db.Column(db.String)
     payment_date= db.Column(db.String)
 
+class Orders(db.Model):
+    order_id = db.Column(db.String, primary_key=True)
+    payment_status = db.Column(db.String)
+    amount_paid = db.Column(db.String)
+    razorpay_payment_id = db.Column(db.String)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now())
+
+
 # main route for home page
 @app.route("/", methods=["GET", "POST"])
 def webhooks():
@@ -56,6 +63,12 @@ def webhooks():
                 if payment_db != None:
                     payment_db.payment_status = "Paid"
                     payment_db.payment_date = data["created_at"]
+                    order = Orders.query.filter_by(order_id=payment_db.invoice_number).first()
+                    if order != None:
+                        order.payment_status = "Paid"
+                        order.amount_paid = main_obj["amount"]
+                        order.razorpay_payment_id = main_obj["invoice_id"]
+                        order.updated_at = datetime.datetime.now()
                     db.session.commit()
             payment = Payments(
                 invoice_id = main_obj["invoice_id"],
@@ -74,11 +87,19 @@ def webhooks():
         else:
             return {error: "Please Send some data."}
 
-# importing order payments data from csv file
-@app.route("/import")
-def data():
-    file_name = 'batch-links2.xlsx'
-    excel_data_df = pd.read_excel(file_name)
+# imported data get in this route
+@app.route("/imported_data")
+def imported_data():
+        order_payments = OrderPayments.query.all()
+        return render_template("order_payments.html", payments = order_payments)
+
+
+@app.route("/upload_csv", methods=["GET", "POST"])
+def upload_csv():
+    if request.method == "GET":
+        return render_template("upload_form.html")
+    file = request.files["csv_file"]
+    excel_data_df = pd.read_excel(file)
     json_str = excel_data_df.to_json(orient='records')
     data = json.loads(json_str)
     for p in data:
@@ -99,10 +120,4 @@ def data():
         )
         db.session.add(new_payment)
         db.session.commit()
-    return json_str
-
-# imported data get in this route
-@app.route("/imported_data")
-def imported_data():
-        order_payments = OrderPayments.query.all()
-        return render_template("order_payments.html", payments = order_payments)
+    return redirect(url_for("imported_data"))
