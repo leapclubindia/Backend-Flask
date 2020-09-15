@@ -3,12 +3,30 @@ from flask_sqlalchemy import SQLAlchemy
 import pprint, json, datetime
 import pandas as pd
 from config import DevelopmentConfig
-from datetime import timezone 
+from datetime import timezone
+from sshtunnel import SSHTunnelForwarder
+from sqlalchemy import create_engine
 
-app = Flask(__name__)
-db = SQLAlchemy(app)
+app = Flask(__name__, instance_relative_config=True)
 
 app.config.from_object(DevelopmentConfig)
+app.config.from_pyfile('config.py')
+
+server = SSHTunnelForwarder(
+          (app.config['HOST'], 22),
+          ssh_username=app.config['SSH_USERNAME'],
+          ssh_private_key= app.config['SSH_PRIVATE_KEY'],
+          remote_bind_address=('127.0.0.1', app.config['PORT']))
+
+server.start()
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{}:{}@localhost:{}/{}'.format(app.config['USER'],
+                                                                       app.config['PASSWORD'],
+                                                                       server.local_bind_port,
+                                                                       app.config['DATABASE'])
+
+db = SQLAlchemy(app)
+
 
 # payments table schem
 class Payments(db.Model):
@@ -106,7 +124,6 @@ def orders_from_db():
         return render_template("orders.html", orders = orders)
 
 
-
 @app.route("/upload_csv", methods=["GET", "POST"])
 def upload_csv():
     if request.method == "GET":
@@ -135,4 +152,5 @@ def upload_csv():
     return redirect(url_for("imported_data"))
 
 if __name__ == "__main__":
-    app.run(DEBUG=True)
+    db.create_all()
+    app.run()
