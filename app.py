@@ -122,30 +122,33 @@ def webhooks():
         data = request.get_json()
         if data:
             main_obj = data["payload"]["payment"]["entity"]
-            if (data["event"] == "invoice.paid") & (data['payload']['order']['entity']['receipt']!= ""):
-                receipt = int(data['payload']['order']['entity']['receipt'])
-                order = Orders.query.filter_by(order_id=receipt).first()
-                if order != None and order.payment_status != "Paid":
-                    order.payment_status = "Paid"
-                    order.payment_type = "Online on Delivery"
-                    order.amount_paid = (main_obj["amount"]/100)
-                    order.razorpay_payment_id = main_obj["id"]
-                    order.razorpay_order_id = main_obj["order_id"]
-                    order.updated_at = datetime.datetime.utcnow()
+            if (data["event"] == "invoice.paid") & ('receipt' in  data['payload']['order']['entity'].keys()):
+                try:
+                    receipt = int(data['payload']['order']['entity']['receipt'])
+                    order = Orders.query.filter_by(order_id=receipt).first()
+                    if order != None and order.payment_status != "Paid":
+                        order.payment_status = "Paid"
+                        order.payment_type = "Online on Delivery"
+                        order.amount_paid = (main_obj["amount"]/100)
+                        order.razorpay_payment_id = main_obj["id"]
+                        order.razorpay_order_id = main_obj["order_id"]
+                        order.updated_at = datetime.datetime.utcnow()
+                        db.session.commit()
+                    payment = Payments(
+                    invoice_id = receipt,
+                    email = main_obj["email"],
+                    phone = main_obj["contact"],
+                    currency = main_obj["currency"],
+                    amount = main_obj["amount"],
+                    fee = main_obj["fee"],
+                    tax = main_obj["tax"],
+                    created_at = main_obj["created_at"],
+                    status = main_obj["status"]
+                )
+                    db.session.add(payment)
                     db.session.commit()
-                payment = Payments(
-                invoice_id = receipt,
-                email = main_obj["email"],
-                phone = main_obj["contact"],
-                currency = main_obj["currency"],
-                amount = main_obj["amount"],
-                fee = main_obj["fee"],
-                tax = main_obj["tax"],
-                created_at = main_obj["created_at"],
-                status = main_obj["status"]
-            )
-            db.session.add(payment)
-            db.session.commit()
+                except:
+                    return "Error"
             return main_obj
         else:
             return {"Please Send some data."}
