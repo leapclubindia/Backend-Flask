@@ -112,11 +112,11 @@ def webhooks():
         else:
             return {error: "Please Send some data."}
 
-# imported data get in this route
-@app.route("/imported_data")
-def imported_data():
-        order_payments = OrderPayments.query.all()
-        return render_template("order_payments.html", payments = order_payments)
+# # imported data get in this route
+# @app.route("/imported_data")
+# def imported_data():
+#         order_payments = OrderPayments.query.all()
+#         return render_template("order_payments.html", payments = order_payments)
 
 @app.route("/orders")
 def orders_from_db():
