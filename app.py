@@ -122,7 +122,7 @@ def webhooks():
         data = request.get_json()
         if data:
             main_obj = data["payload"]["payment"]["entity"]
-            if (data["event"] == "invoice.paid") &  (data['payload']['order']['entity']['receipt']):
+            if (data["event"] == "invoice.paid") & (data['payload']['order']['entity']['receipt'])!='':
                 receipt = int(data['payload']['order']['entity']['receipt'])
                 order = Orders.query.filter_by(order_id=receipt).first()
                 if order != None and order.payment_status != "Paid":
@@ -192,4 +192,5 @@ def upload_csv():
 
 if __name__ == "__main__":
     db.create_all()
+
     app.run()
