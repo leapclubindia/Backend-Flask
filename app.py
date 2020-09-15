@@ -112,11 +112,11 @@ def webhooks():
         else:
             return {error: "Please Send some data."}
 
-# # imported data get in this route
-# @app.route("/imported_data")
-# def imported_data():
-#         order_payments = OrderPayments.query.all()
-#         return render_template("order_payments.html", payments = order_payments)
+# imported data get in this route
+@app.route("/imported_data")
+def imported_data():
+        order_payments = OrderPayments.query.all()
+        return render_template("order_payments.html", payments = order_payments)
 
 @app.route("/orders")
 def orders_from_db():
@@ -124,32 +124,33 @@ def orders_from_db():
         return render_template("orders.html", orders = orders)
 
 
-# @app.route("/upload_csv", methods=["GET", "POST"])
-# def upload_csv():
-#     if request.method == "GET":
-#         return render_template("upload_form.html")
-#     file = request.files["csv_file"]
-#     excel_data_df = pd.read_excel(file)
-#     json_str = excel_data_df.to_json(orient='records')
-#     data = json.loads(json_str)
-#     for p in data:
-#         new_payment = OrderPayments(
-#             invoice_number=p["Invoice Number"],
-#             customer_name=p["Customer Name"],
-#             customer_email=p["Customer Email"],
-#             customer_contact=p["Customer Contact"],
-#             amount=p["Amount (In Paise)"],
-#             description=p["Description"],
-#             expire_by=p["Expire By"],
-#             partial_payment=p["Partial Payment"],
-#             status=p["Status"],
-#             payment_link_id=p["Payment Link Id"],
-#             payment_link_short_URL=p["Payment Link Short URL"],
-#             error_description=p["Error description"],
-#         )
-#         db.session.add(new_payment)
-#         db.session.commit()
-#     return redirect(url_for("imported_data"))
+@app.route("/upload_csv", methods=["GET", "POST"])
+def upload_csv():
+    # if request.method == "GET":
+    #     return render_template("upload_form.html")
+    # file = request.files["csv_file"]
+    # excel_data_df = pd.read_excel(file)
+    # json_str = excel_data_df.to_json(orient='records')
+    # data = json.loads(json_str)
+    # for p in data:
+    #     new_payment = OrderPayments(
+    #         invoice_number=p["Invoice Number"],
+    #         customer_name=p["Customer Name"],
+    #         customer_email=p["Customer Email"],
+    #         customer_contact=p["Customer Contact"],
+    #         amount=p["Amount (In Paise)"],
+    #         description=p["Description"],
+    #         expire_by=p["Expire By"],
+    #         partial_payment=p["Partial Payment"],
+    #         status=p["Status"],
+    #         payment_link_id=p["Payment Link Id"],
+    #         payment_link_short_URL=p["Payment Link Short URL"],
+    #         error_description=p["Error description"],
+    #     )
+    #     db.session.add(new_payment)
+    #     db.session.commit()
+    # return redirect(url_for("imported_data"))
+    return
 
 if __name__ == "__main__":
     db.create_all()
