@@ -53,7 +53,7 @@ class Orders(db.Model):
 def webhooks():
     if request.method == "GET":
         page = request.args.get("page", 1, type=int)
-        payments = Payments.query.paginate(page = page, per_page=5)
+        payments = Payments.query.paginate(page = page, per_page=50)
         return render_template("payments.html", payments = payments)
     else:
         data = request.get_json()
