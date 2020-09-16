@@ -11,18 +11,19 @@ app = Flask(__name__, instance_relative_config=True)
 app.config.from_object(DevelopmentConfig)
 app.config.from_pyfile('config.py')
 
-server = SSHTunnelForwarder(
-          (app.config['HOST'], 22),
-          ssh_username=app.config['SSH_USERNAME'],
-          ssh_private_key= app.config['SSH_PRIVATE_KEY'],
-          remote_bind_address=('127.0.0.1', app.config['PORT']))
+if app.config['SQLALCHEMY_DATABASE_URI'] == '':
+    server = SSHTunnelForwarder(
+              (app.config['HOST'], 22),
+              ssh_username=app.config['SSH_USERNAME'],
+              ssh_private_key= app.config['SSH_PRIVATE_KEY'],
+              remote_bind_address=('127.0.0.1', app.config['PORT']))
 
-server.start()
+    server.start()
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{}:{}@localhost:{}/{}'.format(app.config['USER'],
-                                                                       app.config['PASSWORD'],
-                                                                       server.local_bind_port,
-                                                                       app.config['DATABASE'])
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{}:{}@localhost:{}/{}'.format(app.config['USER'],
+                                                                           app.config['PASSWORD'],
+                                                                           server.local_bind_port,
+                                                                           app.config['DATABASE'])
 
 db = SQLAlchemy(app)
 
@@ -117,7 +118,7 @@ def imported_data():
 
 @app.route("/orders")
 def orders_from_db():
-        orders = Orders.query.all()
+        orders = Orders.query.order_by(Orders.order_id.desc()).limit(100).all()
         return render_template("orders.html", orders = orders)
 
 
