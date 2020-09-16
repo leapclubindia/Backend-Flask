@@ -5,7 +5,6 @@ import pandas as pd
 from config import DevelopmentConfig
 from datetime import timezone
 from sshtunnel import SSHTunnelForwarder
-from sqlalchemy import create_engine
 
 app = Flask(__name__, instance_relative_config=True)
 
@@ -26,7 +25,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{}:{}@localhost:{}/{}'.for
                                                                        app.config['DATABASE'])
 
 db = SQLAlchemy(app)
-
 
 # payments table schem
 class Payments(db.Model):
@@ -60,14 +58,14 @@ class OrderPayments(db.Model):
     payment_date= db.Column(db.String)
 
 class Orders(db.Model):
-    order_id = db.Column(db.String, primary_key=True)
+    order_id = db.Column(db.Integer, primary_key=True)
     payment_status = db.Column(db.String)
     payment_type = db.Column(db.String)
-    amount_paid = db.Column(db.String)
-    total_amount = db.Column(db.String)
+    amount_paid = db.Column(db.Float)
+    total_amount = db.Column(db.Float)
     razorpay_payment_id = db.Column(db.String)
     razorpay_order_id = db.Column(db.String)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now())
+    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.utcnow())
 
 @app.route("/", methods=["GET", "POST"])
 def webhooks():
@@ -81,6 +79,8 @@ def webhooks():
             if (data["event"] == "invoice.paid") & ('receipt' in  data['payload']['order']['entity'].keys()):
                 try:
                     receipt = int(data['payload']['order']['entity']['receipt'])
+                    if (Orders.query.filter_by(order_id=receipt).count()>1):
+                        return "Error"
                     order = Orders.query.filter_by(order_id=receipt).first()
                     if order != None and order.payment_status != "Paid":
                         order.payment_status = "Paid"
@@ -151,5 +151,4 @@ def upload_csv():
 
 if __name__ == "__main__":
     db.create_all()
-
     app.run()
