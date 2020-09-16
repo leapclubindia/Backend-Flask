@@ -2,9 +2,9 @@
 {% block content %}
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-    <a class="navbar-brand font-weight-bold" href="{{url_for('webhooks')}}">Orders</a>
+    <a class="navbar-brand font-weight-bold" href="{{url_for('orders')}}">Orders</a>
     <div class="ml-auto row">
-        <a class="nav-link text-white" href="{{url_for('imported_data')}}">Order Payments</a>
+        <a class="nav-link text-white" href="{{url_for('webhooks')}}">Payments</a>
     </div>
     </div>
 </nav>
@@ -21,7 +21,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for o in orders %}
+            {% for o in orders.items %}
                 <tr>
                     <td scope="row">{{ o.order_id}}</td>
                     <td scope="row">{{ o.payment_status}}</td>
@@ -33,5 +33,23 @@
             {% endfor %}
         </tbody>
     </table>
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+    
+        {% for page_num in orders.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+        {% if page_num %}
+            {% if orders.page == page_num %}
+            <li class="page-item active">
+                <a class="page-link" href="#">{{page_num}} <span class="sr-only">(current)</span></a>
+              </li>            
+              {% else %}
+            <li class="page-item"><a class="page-link" href="{{url_for('orders', page=page_num)}}">{{page_num}}</a></li>
+            {% endif %}
+        {% else %}
+        <li class="page-item"><span class="page_link ml-2 mr-2"></span></li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    </nav>
 </div>
 {% endblock %}

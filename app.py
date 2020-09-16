@@ -24,7 +24,6 @@ if app.config['SQLALCHEMY_DATABASE_URI'] == '':
                                                                            app.config['PASSWORD'],
                                                                            server.local_bind_port,
                                                                            app.config['DATABASE'])
-
 db = SQLAlchemy(app)
 
 # payments table schem
@@ -40,24 +39,6 @@ class Payments(db.Model):
     status = db.Column(db.String)
     tax = db.Column(db.Integer)
 
-# orderpayment table schema
-class OrderPayments(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    invoice_number= db.Column(db.Integer)
-    customer_name= db.Column(db.String)
-    customer_email= db.Column(db.String)
-    customer_contact= db.Column(db.String)
-    amount= db.Column(db.Integer)
-    description= db.Column(db.String)
-    expire_by= db.Column(db.String)
-    partial_payment= db.Column(db.Integer)
-    status= db.Column(db.String)
-    payment_link_id= db.Column(db.String)
-    payment_link_short_URL= db.Column(db.String)
-    error_description= db.Column(db.String)
-    payment_status= db.Column(db.String)
-    payment_date= db.Column(db.String)
-
 class Orders(db.Model):
     order_id = db.Column(db.Integer, primary_key=True)
     payment_status = db.Column(db.String)
@@ -71,7 +52,8 @@ class Orders(db.Model):
 @app.route("/", methods=["GET", "POST"])
 def webhooks():
     if request.method == "GET":
-        payments = Payments.query.all()
+        page = request.args.get("page", 1, type=int)
+        payments = Payments.query.paginate(page = page, per_page=5)
         return render_template("payments.html", payments = payments)
     else:
         data = request.get_json()
@@ -110,45 +92,11 @@ def webhooks():
         else:
             return {"Please Send some data."}
 
-# imported data get in this route
-@app.route("/imported_data")
-def imported_data():
-        order_payments = OrderPayments.query.all()
-        return render_template("order_payments.html", payments = order_payments)
-
 @app.route("/orders")
-def orders_from_db():
-        orders = Orders.query.order_by(Orders.order_id.desc()).limit(100).all()
-        return render_template("orders.html", orders = orders)
-
-
-@app.route("/upload_csv", methods=["GET", "POST"])
-def upload_csv():
-    # if request.method == "GET":
-    #     return render_template("upload_form.html")
-    # file = request.files["csv_file"]
-    # excel_data_df = pd.read_excel(file)
-    # json_str = excel_data_df.to_json(orient='records')
-    # data = json.loads(json_str)
-    # for p in data:
-    #     new_payment = OrderPayments(
-    #         invoice_number=p["Invoice Number"],
-    #         customer_name=p["Customer Name"],
-    #         customer_email=p["Customer Email"],
-    #         customer_contact=p["Customer Contact"],
-    #         amount=p["Amount (In Paise)"],
-    #         description=p["Description"],
-    #         expire_by=p["Expire By"],
-    #         partial_payment=p["Partial Payment"],
-    #         status=p["Status"],
-    #         payment_link_id=p["Payment Link Id"],
-    #         payment_link_short_URL=p["Payment Link Short URL"],
-    #         error_description=p["Error description"],
-    #     )
-    #     db.session.add(new_payment)
-    #     db.session.commit()
-    # return redirect(url_for("imported_data"))
-    return
+def orders():
+    page = request.args.get("page", 1, type=int)
+    orders =Orders.query.order_by(Orders.order_id.desc()).paginate(page = page, per_page=50)
+    return render_template("orders.html", orders = orders)
 
 if __name__ == "__main__":
     db.create_all()

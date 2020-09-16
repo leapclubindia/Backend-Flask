@@ -9,6 +9,7 @@ verify_ssl = true
 flask = "*"
 flask-sqlalchemy = "*"
 pandas = "*"
+sshtunnel = "*"
 
 [requires]
 python_version = "3.8"
