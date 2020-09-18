@@ -78,9 +78,9 @@ def webhooks():
                     email = main_obj["email"],
                     phone = main_obj["contact"],
                     currency = main_obj["currency"],
-                    amount = main_obj["amount"],
-                    fee = main_obj["fee"],
-                    tax = main_obj["tax"],
+                    amount = main_obj["amount"]/100,
+                    fee = main_obj["fee"]/100,
+                    tax = main_obj["tax"]/100,
                     created_at = main_obj["created_at"],
                     status = main_obj["status"]
                 )
