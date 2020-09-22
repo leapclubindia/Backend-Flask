@@ -8,10 +8,17 @@
       rel="stylesheet"
       href="{{url_for('static', filename='css/bootstrap.min.css')}}"
     />
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='css/bootstrap-select.min.css')}}"
+    />
   </head>
   <body>
     <div>{% block content %}{% endblock %}</div>
-    <script src="{{url_for('static', filename='js/jquery.min.js')}}"></script>
-    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/jquery.js')}}"></script>
+    <script src="{{url_for('static', filename='js/popper.js')}}"></script>
+    <script src="{{url_for('static', filename='js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/bootstrap-selectpicker.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/custom.js')}}"></script>
   </body>
 </html>
