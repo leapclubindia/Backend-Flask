@@ -27,7 +27,7 @@
     </div>
   </div>
 </nav>
-<div class="container mt-3 pt-3">
+<div class="ml-3 mr-3 mt-3 pt-3">
   <form action="{{url_for('payment_link')}}" class="form-inline" method="post">
     <select
       class="selectpicker mr-2 ml-auto form-control mb-3"
@@ -44,7 +44,12 @@
         {{o.order_id}}
       </option>
       {% else %}
-      <option disabled data-subtext="Already Exists." class="text-danger" value="{{o.order_id}}">
+      <option
+        disabled
+        data-subtext="Already Exists."
+        class="text-danger"
+        value="{{o.order_id}}"
+      >
         {{o.order_id}}
       </option>
       {% endif%} {% endif%} {% endfor %}
@@ -56,23 +61,50 @@
   <table class="table">
     <thead>
       <tr class="bg-info text-white">
+        <th scope="col"></th>
         <th scope="col">Order ID</th>
+        <th scope="col">Name (Number)</th>
+        <th scope="col">Total Amount (Refund)</th>
+        <th scope="col">Amount Payble</th>
+        <th scope="col">Payment Paid</th>
+        <th scope="col">Short URL</th>
         <th scope="col">Payment Status</th>
-        <th scope="col">Total Amount</th>
-        <th scope="col">Amount Paid</th>
+        <th scope="col">Link Status</th>
+        <th scope="col">Issued At</th>
+        <th scope="col">Updated At</th>
+        <th scope="col">Invoice ID</th>
         <th scope="col">Razorpay Payment ID</th>
-        <th scope="col">Updated AT</th>
       </tr>
     </thead>
     <tbody>
       {% for o in orders.items %}
       <tr>
+        <td scope="row">
+          <button
+            onclick="copyToClipboard('{{o.payment_link.short_url}}')"
+            class="btn btn-warning"
+          >
+            C
+          </button>
+        </td>
         <td scope="row">{{ o.order_id}}</td>
-        <td scope="row">{{ o.payment_status}}</td>
-        <td scope="row">{{ o.total_amount}}</td>
+        <td scope="row">
+          {{ o.customer_entity.entity_name + " ("+ o.mobile_number+")"}}
+        </td>
+        <td scope="row">{{ o.total_amount }} ({{refund_dict[o.order_id]}})</td>
+        {% if o.total_amount != None %}
+        <td scope="row">{{ o.total_amount - refund_dict[o.order_id]}}</td>
+        {%else%}
+        <td scope="row">0</td>
+        {%endif%}
         <td scope="row">{{ o.amount_paid}}</td>
-        <td scope="row">{{ o.razorpay_payment_id}}</td>
+        <td scope="row">{{ o.payment_link.short_url}}</td>
+        <td scope="row">{{ o.payment_status}}</td>
+        <td scope="row">{{ o.payment_link.status}}</td>
         <td scope="row">{{ o.updated_at}}</td>
+        <td scope="row">{{ o.payment_link.issued_at}}</td>
+        <td scope="row">{{ o.payment_link.id}}</td>
+        <td scope="row">{{ o.razorpay_payment_id}}</td>
       </tr>
       {% endfor %}
     </tbody>

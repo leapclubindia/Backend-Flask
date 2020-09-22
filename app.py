@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request, url_for, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
-import pprint, json, datetime, razorpay
+import pprint, json, datetime, razorpay, uuid
 import pandas as pd
 from config import DevelopmentConfig
 from datetime import timezone
 from sshtunnel import SSHTunnelForwarder
+from sqlalchemy.dialects.postgresql import UUID
 
 app = Flask(__name__, instance_relative_config=True)
 
@@ -30,20 +31,20 @@ razorpay_client = razorpay.Client(auth=("rzp_test_NbcxeXyisd2EhB", "wKClBRsKbNXl
 
 # payments table schem
 class Payments(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     amount = db.Column(db.Integer)
     created_at = db.Column(db.String)
     currency = db.Column(db.String)
     email = db.Column(db.String)
     fee = db.Column(db.Integer)
-    invoice_id = db.Column(db.String)
+    invoice_id = db.Column(db.Integer, db.ForeignKey('payment_links.receipt'))
     phone = db.Column(db.String)
     status = db.Column(db.String)
     tax = db.Column(db.Integer)
 
 class Orders(db.Model):
-    id = db.Column(db.String, primary_key=True)
-    order_id = db.Column(db.Integer)
+    id = db.Column(UUID(as_uuid=True), db.ForeignKey('order_items.order_id'), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    order_id = db.Column(db.Integer,unique=True, nullable=False)
     payment_status = db.Column(db.String)
     payment_type = db.Column(db.String)
     amount_paid = db.Column(db.Float)
@@ -52,38 +53,41 @@ class Orders(db.Model):
     razorpay_order_id = db.Column(db.String)
     mobile_number = db.Column(db.String)
     updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.utcnow())
-    customer_entity_id = db.Column(db.String)
+    customer_entity_id = db.Column(UUID(as_uuid=True))
+    order_items = db.relationship("OrderItems",foreign_keys='OrderItems.order_id', uselist=True)
+    customer_entity = db.relationship("Entities", uselist=False)
+    payment_link = db.relationship("PaymentLinks",foreign_keys='PaymentLinks.receipt', uselist=False)
 
 class RefundOrder(db.Model):
-    id = db.Column(db.String, primary_key=True)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     quantity = db.Column(db.Float)
-    order_item_id = db.Column(db.String, db.ForeignKey('order_items.id'))
+    order_item_id = db.Column(UUID(as_uuid=True), db.ForeignKey('order_items.id'))
 
 class OrderItems(db.Model):  
-    id = db.Column(db.String, primary_key=True)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     price = db.Column(db.Float)
     amount = db.Column(db.Float)
     quantity = db.Column(db.Float)
-    order_id = db.Column(db.String)
-    order_refund = db.relationship("RefundOrder", uselist=False)
-
-
+    order_refund = db.relationship("RefundOrder",foreign_keys='RefundOrder.order_item_id', uselist=False)
+    order_id = db.Column(UUID(as_uuid=True), db.ForeignKey('orders.id'))
+    order = db.relationship("Orders",foreign_keys='Orders.id', uselist=False)
 
 
 class Entities(db.Model):
-    id = db.Column(db.String, primary_key=True)
+    id = db.Column(UUID(as_uuid=True), db.ForeignKey('orders.customer_entity_id'), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     entity_name = db.Column(db.String)
     email = db.Column(db.String)
 
 class PaymentLinks(db.Model):
-    id = db.Column(db.String)
+    id = db.Column(db.String, unique=True, nullable=True)
     contact = db.Column(db.String)
     name = db.Column(db.String)
     short_url = db.Column(db.String)
     amount = db.Column(db.Float)
-    receipt = db.Column(db.String, primary_key=True)
+    receipt = db.Column(db.Integer,db.ForeignKey('orders.order_id'), unique=True, primary_key=True)
     issued_at = db.Column(db.String)
     status = db.Column(db.String)
+    payment = db.relationship("Payments", uselist=False)
 
 @app.route("/", methods=["GET", "POST"])
 def webhooks():
@@ -133,17 +137,24 @@ def orders():
     page = request.args.get("page", 1, type=int)
     orders =Orders.query.order_by(Orders.order_id.desc()).paginate(page = page, per_page=50)
     payment_links = PaymentLinks.query.all()
+    refund_dict = {}
+    for o in orders.items:
+        total_refunds = 0
+        for item in o.order_items:
+            if item.order_refund:
+                total_refunds = total_refunds + item.price*item.order_refund.quantity
+        refund_dict[o.order_id] = total_refunds
     def get_ids(p):
-        return int(p.receipt)
+        if p.short_url != None:
+            return int(p.receipt)
     payment_links = list(map(get_ids, payment_links))
-    return render_template("orders.html", orders = orders, links = payment_links)
+    return render_template("orders.html", orders = orders, links = payment_links, refund_dict= refund_dict)
 
 def gen_payment_link(order_id):
     order = Orders.query.filter_by(order_id = order_id).first()
     customer = Entities.query.filter_by(id = order.customer_entity_id).first()
-    order_items = OrderItems.query.filter_by(order_id = order.id).all()
     total_refunds = 0
-    for item in order_items:
+    for item in order.order_items:
         if item.order_refund:
             total_refunds = total_refunds + item.price*item.order_refund.quantity
     data = {

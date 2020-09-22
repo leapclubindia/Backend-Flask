@@ -1,69 +1,79 @@
-{% extends "layout.html" %}
-{% block content %}
+{% extends "layout.html" %} {% block content %}
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" href="#">Payment Links</a>
-        <button class="navbar-toggler ml-auto" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
-            <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
-              <li class="nav-item">
-                <a class="nav-link" href="{{url_for('webhooks')}}">Payments</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{{url_for('orders')}}">Orders</a>
-              </li>
-            </ul>
-          </div>
+  <div class="container">
+    <a class="navbar-brand" href="#">Payment Links</a>
+    <button
+      class="navbar-toggler ml-auto"
+      type="button"
+      data-toggle="collapse"
+      data-target="#navbarTogglerDemo01"
+      aria-controls="navbarTogglerDemo01"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+      <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="{{url_for('webhooks')}}">Payments</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{url_for('orders')}}">Orders</a>
+        </li>
+      </ul>
     </div>
+  </div>
 </nav>
 <div class="container mt-3 pt-3">
-    <table class="table">
-        <thead>
-            <tr class="bg-info text-white">
-            <th scope="col">ID</th>
-            <th scope="col">Contact</th>
-            <th scope="col">Name</th>
-            <th scope="col">Short URL</th>
-            <th scope="col">Amount</th>
-            <th scope="col">Receipt</th>
-            <th scope="col">Issued AT</th>
-            <th scope="col">Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for o in payment_links.items %}
-                <tr>
-                    <td scope="row">{{ o.id}}</td>
-                    <td scope="row">{{ o.contact}}</td>
-                    <td scope="row">{{ o.name}}</td>
-                    <td scope="row">{{ o.short_url}}</td>
-                    <td scope="row">{{ o.amount/100}}</td>
-                    <td scope="row">{{ o.receipt}}</td>
-                    <td scope="row">{{ o.issued_at}}</td>
-                    <td scope="row">{{ o.status}}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <nav aria-label="Page navigation example">
-        <ul class="pagination justify-content-center">
-    
-        {% for page_num in payment_links.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-        {% if page_num %}
-            {% if payment_links.page == page_num %}
-            <li class="page-item active">
-                <a class="page-link" href="#">{{page_num}} <span class="sr-only">(current)</span></a>
-              </li>            
-              {% else %}
-            <li class="page-item"><a class="page-link" href="{{url_for('orders', page=page_num)}}">{{page_num}}</a></li>
-            {% endif %}
-        {% else %}
-        <li class="page-item"><span class="page_link ml-2 mr-2"></span></li>
-        {% endif %}
-        {% endfor %}
+  <table class="table">
+    <thead>
+      <tr class="bg-info text-white">
+        <th scope="col">ID</th>
+        <th scope="col">Contact</th>
+        <th scope="col">Name</th>
+        <th scope="col">Short URL</th>
+        <th scope="col">Amount</th>
+        <th scope="col">Receipt</th>
+        <th scope="col">Issued AT</th>
+        <th scope="col">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in payment_links.items %}
+      <tr>
+        <td scope="row">{{ o.id}}</td>
+        <td scope="row">{{ o.contact}}</td>
+        <td scope="row">{{ o.name}}</td>
+        <td scope="row">{{ o.short_url}}</td>
+        <td scope="row">{{ o.amount/100}}</td>
+        <td scope="row">{{ o.receipt}}</td>
+        <td scope="row">{{ o.issued_at}}</td>
+        <td scope="row">{{ o.status}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center">
+      {% for page_num in payment_links.iter_pages(left_edge=1, right_edge=1,
+      left_current=1, right_current=2) %} {% if page_num %} {% if
+      payment_links.page == page_num %}
+      <li class="page-item active">
+        <a class="page-link" href="#"
+          >{{page_num}} <span class="sr-only">(current)</span></a
+        >
+      </li>
+      {% else %}
+      <li class="page-item">
+        <a class="page-link" href="{{url_for('orders', page=page_num)}}"
+          >{{page_num}}</a
+        >
+      </li>
+      {% endif %} {% else %}
+      <li class="page-item"><span class="page_link ml-2 mr-2"></span></li>
+      {% endif %} {% endfor %}
     </ul>
-    </nav>
+  </nav>
 </div>
 {% endblock %}
