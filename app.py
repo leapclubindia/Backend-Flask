@@ -44,15 +44,18 @@ class Payments(db.Model):
         unique=True,
         nullable=False,
     )
-    amount = db.Column(db.Integer)
+    amount = db.Column(db.Float)
     created_at = db.Column(db.String)
     currency = db.Column(db.String)
     email = db.Column(db.String)
     fee = db.Column(db.Integer)
-    invoice_id = db.Column(db.Integer, db.ForeignKey("payment_links.receipt"))
+    invoice_id = db.Column(db.Integer)
     phone = db.Column(db.String)
     status = db.Column(db.String)
     tax = db.Column(db.Integer)
+    order_id = db.Column(
+        UUID(as_uuid=True), db.ForeignKey("payment_links.order_id")
+    )
 
 
 class Orders(db.Model):
@@ -64,7 +67,7 @@ class Orders(db.Model):
         unique=True,
         nullable=False,
     )
-    order_id = db.Column(db.Integer, unique=True, nullable=False)
+    order_id = db.Column(db.Integer)
     payment_status = db.Column(db.String)
     payment_type = db.Column(db.String)
     amount_paid = db.Column(db.Float)
@@ -79,7 +82,7 @@ class Orders(db.Model):
     )
     customer_entity = db.relationship("Entities", uselist=False)
     payment_link = db.relationship(
-        "PaymentLinks", foreign_keys="PaymentLinks.receipt", uselist=False
+        "PaymentLinks", foreign_keys="PaymentLinks.order_id", uselist=False
     )
 
 
@@ -136,11 +139,12 @@ class PaymentLinks(db.Model):
     name = db.Column(db.String)
     short_url = db.Column(db.String)
     amount = db.Column(db.Float)
-    receipt = db.Column(
-        db.Integer, db.ForeignKey("orders.order_id"), unique=True, primary_key=True
-    )
+    receipt = db.Column(db.Integer)
     issued_at = db.Column(db.String)
     status = db.Column(db.String)
+    order_id = db.Column(
+        UUID(as_uuid=True), db.ForeignKey("orders.id"), primary_key=True, unique=True
+    )
     payment = db.relationship("Payments", uselist=False)
 
 
@@ -184,34 +188,35 @@ def webhooks():
             if (data["event"] == "invoice.paid") & (
                 "receipt" in data["payload"]["order"]["entity"].keys()
             ):
-                try:
-                    receipt = int(data["payload"]["order"]["entity"]["receipt"])
-                    if Orders.query.filter_by(order_id=receipt).count() > 1:
-                        return "Error"
-                    order = Orders.query.filter_by(order_id=receipt).first()
-                    if order != None and order.payment_status != "Paid":
-                        order.payment_status = "Paid"
-                        order.payment_type = "Online on Delivery"
-                        order.amount_paid = main_obj["amount"] / 100
-                        order.razorpay_payment_id = main_obj["id"]
-                        order.razorpay_order_id = main_obj["order_id"]
-                        order.updated_at = datetime.datetime.utcnow()
-                        db.session.commit()
-                    payment = Payments(
-                        invoice_id=receipt,
-                        email=main_obj["email"],
-                        phone=main_obj["contact"],
-                        currency=main_obj["currency"],
-                        amount=main_obj["amount"],
-                        fee=main_obj["fee"],
-                        tax=main_obj["tax"],
-                        created_at=main_obj["created_at"],
-                        status=main_obj["status"],
-                    )
-                    db.session.add(payment)
-                    db.session.commit()
-                except:
+                # try:
+                receipt = int(data["payload"]["order"]["entity"]["receipt"])
+                if Orders.query.filter_by(order_id=receipt).count() > 1:
                     return "Error"
+                order = Orders.query.filter_by(order_id=receipt).first()
+                if order != None and order.payment_status != "Paid":
+                    order.payment_status = "Paid"
+                    order.payment_type = "Online on Delivery"
+                    order.amount_paid = main_obj["amount"] / 100
+                    order.razorpay_payment_id = main_obj["id"]
+                    order.razorpay_order_id = main_obj["order_id"]
+                    order.updated_at = datetime.datetime.utcnow()
+                    db.session.commit()
+                payment = Payments(
+                    invoice_id=receipt,
+                    email=main_obj["email"],
+                    phone=main_obj["contact"],
+                    currency=main_obj["currency"],
+                    amount=main_obj["amount"],
+                    fee=main_obj["fee"],
+                    tax=main_obj["tax"],
+                    created_at=main_obj["created_at"],
+                    status=main_obj["status"],
+                    order_id = order.id
+                )
+                db.session.add(payment)
+                db.session.commit()
+                # except:
+                #     return "Error"
             return main_obj
         else:
             return {"Please Send some data."}
@@ -273,6 +278,7 @@ def gen_payment_link(order_id):
             receipt=razorpay_payment_link["receipt"],
             issued_at=razorpay_payment_link["issued_at"],
             status="Success",
+            order_id=order.id,
         )
     except:
         payment_link = PaymentLinks(
@@ -284,6 +290,7 @@ def gen_payment_link(order_id):
             receipt=order_id,
             issued_at=None,
             status="Failled",
+            order_id=order.id,
         )
     db.session.add(payment_link)
     db.session.commit()
@@ -314,7 +321,8 @@ def whatsapp(order_id):
     text = (
         text
         + "*Total Amount: "
-        + get_int(order.total_amount - get_order_refunds(order.order_items))+"*"
+        + get_int(order.total_amount - get_order_refunds(order.order_items))
+        + "*"
     )
     order_refunds = list_order_refunds(order.order_items)
     if order_refunds:
